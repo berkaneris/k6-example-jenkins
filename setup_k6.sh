@@ -1,9 +1,21 @@
 #!/bin/bash
 set -ex
 
-sudo apt-get update
-sudo apt-get install dirmngr --install-recommends
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 379CE192D401AB61
-echo "deb https://dl.bintray.com/loadimpact/deb stable main" | sudo tee -a /etc/apt/sources.list
-sudo apt-get update
-sudo apt-get install k6
+# Jenkins konteyneri genellikle root yetkisiyle çalışır, sudo'ya gerek yoktur.
+# Eğer sudo yüklü değilse, doğrudan komutları çalıştırıyoruz.
+
+apt-get update
+apt-get install -y gpg wget
+
+# Eski anahtar ve depoları temizleyelim (opsiyonel ama sağlıklı)
+rm -f /usr/share/keyrings/k6-archive-keyring.gpg
+
+# Yeni resmi Grafana k6 anahtarını ekleyelim
+wget -q -O - https://dl.k6.io/key.gpg | gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+
+# Resmi depoyu listeye ekleyelim
+echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | tee /etc/apt/sources.list.d/k6.list
+
+# Listeyi güncelleyip k6'yı kuralım
+apt-get update
+apt-get install -y k6
